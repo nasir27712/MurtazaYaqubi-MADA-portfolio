@@ -3,3 +3,172 @@ title: "R Coding Exercise"
 ---
 
 Placeholder file for the future R coding exercise.
+
+#Loading and checking data:
+
+First we begin by installing necessary packages for this analysis if we haven't already. Once the package installs, we need to load the package using library function. We need to load the packages before use, every time we open R.
+
+```{r}
+install.packages("dslabs", repos = "https://cran.rstudio.com/")
+library("dslabs") #load the package.
+library("tidyverse") #This is a good package for data processing tasks and since I have it installed, I only had to load it. 
+library(ggplot2) #use to generate plots. 
+library(dplyr) #load this package if you want to use %>%
+```
+
+Now we are going to look into help file for gapminder data.
+
+```{r}
+help("gapminder")
+```
+
+We use the following function inorder to get an overview of the data structure.
+
+```{r}
+str(gapminder) #get an over view of data structure.
+```
+
+We are now going to look into the summary of the data.
+
+```{r}
+summary(gapminder)
+```
+
+Let us determine the type of object "gapminder" is.
+
+```{r}
+class(gapminder)
+```
+
+# Processing Data:
+
+For this part of data prcessing we want to focus on Africa only so we will create an objest called africadata that holds all the data for Africa.
+
+```{r}
+africadata <- filter(gapminder, continent == "Africa")
+```
+
+Now let's check africadata.
+
+```{r}
+view(africadata) #view the entire dataset.
+str(africadata) #get an overview the data structure.
+summary(africadata) #get a summary of data.
+dim(africadata) #check the dimensions of data.
+```
+
+I want to create a new dataset called inf.mort_lf.exp that only includes two columns infant_mortality and life_expectancy, using africadata.
+
+```{r}
+inf.mort_lf.exp <- africadata %>% 
+  select("infant_mortality", "life_expectancy") #create a new dataset from africadata that only contains two columns namely, infant_mortality and life_expectancy. 
+str(inf.mort_lf.exp) #get an overview of the data structure.
+summary(inf.mort_lf.exp) #get a summary of the data.
+nrow(inf.mort_lf.exp) #check number of row/observations. 
+dim(inf.mort_lf.exp) #check the dimensions of the data.
+```
+
+I want to create another dataset called pop_lf.exp that only includes population and life_expectancy from africadat.
+
+```{r}
+pop_lf.exp <- africadata %>%
+  select("population", "life_expectancy") #create a new dataset from africadata with only two columns namely, population and life_expectancy. 
+
+str(pop_lf.exp) #get an overview of the data structure.
+summary(pop_lf.exp) #get a summary of the data.
+dim(pop_lf.exp) #check the dimnensions of the data. 
+```
+
+# Plotting data:
+
+Now we can start generating plots for the newly created variables. We will generate a scatterplot and plot life expecrtancy as a function of infant mortality.
+
+```{r}
+pt1 <- inf.mort_lf.exp %>% 
+  ggplot(aes(life_expectancy, infant_mortality)) + geom_point(color = "black") + geom_smooth(color = "green",method = 'lm') + labs(title = "Figure 1. Life expectancy as a function of infant mortality")  #generate a scatterplot with regression line to demonstrate the positive or negative correlation. 
+
+plot(pt1) #generate the scatterplot.
+
+print(pt1) #print the plot. 
+```
+
+As shown in figure 1, there is a negative correlation between infant mortality and life expectancy.
+
+Let's generate another scatterplot by ploting population as a function of life expectancy.
+
+```{r}
+pt2 <- pop_lf.exp %>%
+  ggplot(aes(population, life_expectancy)) + geom_point(color = "black") + scale_x_log10() + geom_smooth(color = "red", method = 'lm') + labs(title = "Figure 2. Population as a function of life expectancy") #generated a scatterplot with population on the x-axis and life_expectancy on the y-axis.Note: we have set x-axis to log scale. 
+plot(pt2) #generate the plot.
+print(pt2) # print the plot. 
+```
+
+As shown in figure 2, there a not very strong correlation between life expectancy and population. Note: x-axis is set to log scale.
+
+Figure 2 shows individual streaks of data poits that go together. This is mainly because the data is collected over many years and each streak represents data from an individual year.
+
+# More data processing:
+
+Determine the number of NA's for infant moratlity.
+
+```{r}
+summary(africadata$infant_mortality) #look at the summary for NA's. 
+sum(is.na(africadata$infant_mortality)) # total number of NA's in infant mortality column.
+```
+
+Create another dataset called missing_df that only contains two variables, Year and infant mortlaity to further investigate the years that have missing data in the infant mortality column.
+
+```{r}
+missing_df <- africadata %>% 
+  select("year", "infant_mortality")  #variable called missing_df with the variables year and infant mortality.
+View(missing_df )  #view the newly created dataset.
+
+missing_df <- missing_df %>% 
+  filter(is.na(infant_mortality)) %>%  #filter the NA's from infant mortality variable. 
+  select(year) %>%    #select the variable year that corresponds with the NA's in infant mortality column.
+  distinct()  #use it to avoid repetition of the same years. 
+View(missing_df)  #view the dataset.
+
+year_2000 <- africadata %>%  #select the year 2000 from the year column to further investigate by generating plots. 
+  filter(year == 2000)
+str(year_2000)  #get overview of the data structure.
+summary(year_2000)  #summary of the dataset called year_2000 that has 51 observations and 9 variables. 
+```
+
+# More plottig:
+
+We are going to generate scatterplots using the new dataset to further investigate it.
+
+```{r}
+pt1.v2 <- year_2000 %>%       #generate a scatterplot of life_expectancy as a function of infant mortality which now holds data for the year 2000 only.
+  ggplot(aes(life_expectancy, infant_mortality)) + geom_point(color = "black") + geom_smooth(color = "green", method = 'lm') + labs(title = "Figure 1a. Life expectancy as a function of infant mortality")  #generate scatterplot using this code with a few tweeks in the code to make the plot look better and more colorful. The labs argument is used to add custom titles to the scatterplot.
+plot(pt1.v2) #generate the plot. 
+
+
+pt2.v2 <- year_2000 %>%    #generate a scatterplot of population as a function of life expectancy which now holds data for the year 2000 only with 51 observations.
+  ggplot(aes(population, life_expectancy)) + geom_point(color = "black") + scale_x_log10() + geom_smooth(color = "red", method = 'lm') + labs(title = "Figure 2a. Population as a function of life expectancy")   #generate scatterplot using this code with a few tweeks in the code to make the plot look better and more colorful. The argument labs is used to add custom titles to the scatterplot.
+plot(pt2.v2)  #generate the plot.
+```
+
+#Fitting sample models:
+
+Fit a regession model for the two columns in the year_2000 dataset. The fit has life expectancy as an outcome and infant mortality as predictor.
+
+```{r}
+fit1 <- lm(life_expectancy ~ infant_mortality, data = year_2000) #fit regression model with life expectancy as the outcome and infant mortality as predictor. Note: In the lm function, outcome lies on the left of tilde sign and predictor on the right side.  
+summary(fit1) #get the summary of the sample model
+```
+
+Interpretation: Based on the p-value (p=2.83\*10\^-8), we conclude that there is strong evidence to reject the null hypothesis, which states that there is no relationship between infant mortality and life expectancy.This analysis shows a strong negative link between infant mortality and life expectancy in the year 2000. It means that for every extra infant death per 1,000 live births, life expectancy decreases by about 0.19 years (around 2.3 months).
+
+Fit a regression model with life expectancy as outcome and population as predictor from the year_2000 dataset.
+
+```{r}
+fit2 <- lm(life_expectancy ~ population, data = year_2000) #fit regession model with life expectancy as outcome and population as predictor.
+
+summary(fit2) #get the summary for the fitted model.
+```
+
+Interpretation: In this model, based on the p-value (0.6159), the population variable does not have a significant effect on life expectancy. It’s likely not a meaningful predictor for life expectancy in this dataset.
+
+\`\`\`
